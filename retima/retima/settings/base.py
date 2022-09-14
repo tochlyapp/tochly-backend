@@ -27,7 +27,7 @@ SECRET_KEY = config("SECRET_KEY")
 # Application definition
 
 INSTALLED_APPS = [
-    'account.apps.AccountConfig',
+    'users.apps.usersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -64,9 +65,13 @@ TEMPLATES = [
     },
 ]
 
+DATABASE_ROUTERS = (
+    'django_tenants.routers.TenantSyncRouter',
+)
+
 WSGI_APPLICATION = 'retima.wsgi.application'
 
-AUTH_USER_MODEL = 'account.User'
+AUTH_USER_MODEL = 'users.User'
 
 
 # Password validation
