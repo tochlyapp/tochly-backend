@@ -23,18 +23,37 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
+SITE_ID = 1
+
 
 # Application definition
 
-INSTALLED_APPS = [
-    'users.apps.usersConfig',
+SHARED_APPS = [
+    'django_tenants',
+    'teams.apps.TeamsConfig',
+    'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
 ]
+
+TENANT_APPS = [
+    'users.apps.UsersConfig',
+    'members.apps.MembersConfig',
+    'django.contrib.contenttypes',
+    'django.contrib.auth',
+    'django.contrib.admin',
+]
+
+INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
+
+TENANT_MODEL = "teams.Team"
+
+TENANT_DOMAIN_MODEL = "teams.Domain"
 
 MIDDLEWARE = [
     'django_tenants.middleware.main.TenantMainMiddleware',
@@ -47,7 +66,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'retima.urls'
+ROOT_URLCONF = 'retima.urls_tenants'
 
 TEMPLATES = [
     {
