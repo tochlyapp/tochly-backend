@@ -28,9 +28,7 @@ SITE_ID = 1
 
 # Application definition
 
-SHARED_APPS = [
-    'django_tenants',
-    'teams.apps.TeamsConfig',
+INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,24 +37,11 @@ SHARED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-]
-
-TENANT_APPS = [
-    'users.apps.UsersConfig',
+    'teams.apps.TeamsConfig',
     'members.apps.MembersConfig',
-    'django.contrib.contenttypes',
-    'django.contrib.auth',
-    'django.contrib.admin',
 ]
-
-INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
-
-TENANT_MODEL = "teams.Team"
-
-TENANT_DOMAIN_MODEL = "teams.Domain"
 
 MIDDLEWARE = [
-    'django_tenants.middleware.main.TenantMainMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -66,7 +51,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'tochly.urls_tenants'
+ROOT_URLCONF = 'tochly.urls'
 
 TEMPLATES = [
     {
@@ -83,10 +68,6 @@ TEMPLATES = [
         },
     },
 ]
-
-DATABASE_ROUTERS = (
-    'django_tenants.routers.TenantSyncRouter',
-)
 
 WSGI_APPLICATION = 'tochly.wsgi.application'
 
