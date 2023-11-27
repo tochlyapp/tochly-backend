@@ -13,9 +13,9 @@ ALLOWED_HOSTS = []
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': config('RETIMA_DB'),
-        'USER': config('RETIMA_USER'),
-        'PASSWORD': config('RETIMA_PASSWORD'),
+        'NAME': config('TOCHLY_DB'),
+        'USER': config('TOCHLY_USER'),
+        'PASSWORD': config('TOCHLY_PASSWORD'),
         'HOST': 'localhost'
     }
 }
