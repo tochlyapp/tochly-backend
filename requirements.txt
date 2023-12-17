@@ -1,7 +1,7 @@
-django==4.1
-pillow==9.2.0
-psycopg2==2.9.3
-djangorestframework==3.13.1
-channels==3.0.5
-channels-redis==3.4.1
-python-decouple==3.6
+django=4.2.7
+pillow==10.1.0
+psycopg2==2.9.9
+djangorestframework==3.14.1
+channels[daphne]==4.0.0
+channels-redis==4.1.0
+python-decouple==3.8

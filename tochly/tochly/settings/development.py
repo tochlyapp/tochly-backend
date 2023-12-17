@@ -4,7 +4,7 @@ from .base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
 
 # Database
@@ -16,7 +16,7 @@ DATABASES = {
         'NAME': config('TOCHLY_DB'),
         'USER': config('TOCHLY_USER'),
         'PASSWORD': config('TOCHLY_PASSWORD'),
-        'HOST': 'localhost'
+        'HOST':config('HOST')
     }
 }
 
