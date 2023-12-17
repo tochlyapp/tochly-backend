@@ -62,9 +62,17 @@ class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     display_name = models.CharField(max_length=50, blank=True, null=True)
     title = models.CharField(max_length=50, blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True, unique=True, db_index=True)
+    phone_number = models.CharField(
+        max_length=15, blank=True, null=True, unique=True, db_index=True,
+    )
     online = models.BooleanField(default=False)
-    status = models.CharField(max_length=20, choices=STATUS_OPTIONS, default='')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_OPTIONS, 
+        default='', 
+        blank=True, 
+        null=True,
+    )
     timezone = models.CharField(max_length=50, blank=True, null=True)
 
     @property
@@ -73,7 +81,7 @@ class Profile(models.Model):
 
     @property
     def full_name(self):
-        return f'{user.first_name} {user.last_name}'
+        return f'{self.user.first_name} {self.user.last_name}'
 
     def __str__(self):
         return self.full_name

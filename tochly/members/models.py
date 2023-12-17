@@ -18,8 +18,12 @@ class Member(models.Model):
         ('ADMIN', 'admin'),
         ('MEMBER', 'member')
     ]
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+    )
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
-    permission = models.CharField(max_length=10, choices=PERMISSIONS, default='member')
+    permission = models.CharField(
+        max_length=10, choices=PERMISSIONS, default='member',
+    )
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
