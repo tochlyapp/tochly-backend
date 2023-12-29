@@ -16,7 +16,7 @@ class Member(models.Model):
     PERMISSIONS = [
         ('OWNER', 'owner'),
         ('ADMIN', 'admin'),
-        ('MEMBER', 'member')
+        ('MEMBER', 'member'),
     ]
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE,

@@ -10,18 +10,24 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from os import getenv, path
 from pathlib import Path
-from decouple import config
+import dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# load env config
+env_file = BASE_DIR / '.env.local'
+if path.isfile(BASE_DIR / '.env.local'):
+    dotenv.load_dotenv(dotenv_path=env_file, verbose=True)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config("TOCHLY_SECRET_KEY")
+SECRET_KEY = getenv("SECRET_KEY")
 
 SITE_ID = 1
 
@@ -38,12 +44,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
+    'corsheaders',
+    'rest_framework',
+    'djoser',
     'members.apps.MembersConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -73,6 +83,13 @@ WSGI_APPLICATION = 'tochly.wsgi.application'
 ASGI_APPLICATION = 'tochly.asgi.application'
 
 AUTH_USER_MODEL = 'users.User'
+AUTH_COOKIE = 'access'
+AUTH_COOKIE_ACCESS_MAX_AGE = 60 * 60
+AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24
+AUTH_COOKIE_HTTP_ONLY = True
+AUTH_COOKIE_SECURE = getenv('AUTH_COOKIE_SECURE', 'True') == 'True'
+AUTH_COOKIE_PATH = '/'
+AUTH_COOKIE_SAMESITE = 'None'
 
 
 # Password validation
@@ -110,8 +127,46 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'users.authentication.CustomJWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated'
+    )
+}
+
+# Djoser settings
+DJOSER = {
+    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+    'TOKEN_MODEL': None,
+}
+# Djoser email context
+DOMAIN = getenv('WEB_HOST')
+SITE_NAME = 'Tochly'
+
+# corse settings
+CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS').split(',')
+CORSE_ALLOW_CREDENTIALS = True
+
+# email settings
+EMAIL_BACKEND = 'django_ses.SESBackend'
+DEFAULT_FROM_EMAIL = getenv('AWS_SES_FROM_EMAIL')
+AWS_SES_FROM_EMAIL = getenv('AWS_SES_FROM_EMAIL')
+AWS_SES_ACCESS_KEY_ID = getenv('AWS_SES_ACCESS_KEY_ID')
+AWS_SES_SECRET_ACCESS_KEY = getenv('AWS_SES_SECRET_ACCESS_KEY')
+AWS_SES_REGION_NAME = getenv('AWS_SES_REGION_NAME')
+AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
+USE_SES_V2 = True

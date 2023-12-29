@@ -13,10 +13,9 @@ ALLOWED_HOSTS = ['localhost']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('TOCHLY_DB'),
-        'USER': config('TOCHLY_USER'),
-        'PASSWORD': config('TOCHLY_PASSWORD'),
-        'HOST':config('HOST')
+        'NAME': getenv('DB_NAME'),
+        'USER': getenv('DB_USER'),
+        'PASSWORD': getenv('DB_PASSWORD'),
+        'HOST':getenv('HOST')
     }
 }
-

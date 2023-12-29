@@ -43,8 +43,6 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'email'
 
-    # Remove the email field from the REQUIRED_FIELDS settings 
-    # as it's automatically included as USERNAME_FIELD.
     REQUIRED_FIELDS = []
 
     objects = UserManager()
@@ -55,7 +53,7 @@ class Profile(models.Model):
         ('', ''),
         ('In a Meeting', 'meeting'),
         ('Commuting', 'commuting'),
-        ('Working Remotely', 'romote'),
+        ('Working Remotely', 'remote'),
         ('Sick', 'sick'),
         ('In Leave', 'leave'),
     ]
