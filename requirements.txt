@@ -2,9 +2,11 @@ django=4.2.7
 pillow==10.1.0
 psycopg2==2.9.9
 djangorestframework==3.14.1
+djangorestframework-simplejwt==5.3.1
 djoser==2.2.2
 channels[daphne]==4.0.0
 channels-redis==4.1.0
 python-dotenv==1.0.0
 django-ses==3.5.2
 django-cors-headers==4.3.1
+social-auth-app-django==5.4.0
