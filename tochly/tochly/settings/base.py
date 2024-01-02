@@ -53,8 +53,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -155,8 +155,9 @@ REST_FRAMEWORK = {
 
 # Djoser settings
 DJOSER = {
-    'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
-    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'PASSWORD_RESET_CONFIRM_URL': 'auth/password-reset/{uid}/{token}',
+    'ACTIVATION_URL': 'auth/activate/{uid}/{token}',
+    'USER_CREATE_PASSWORD_RETYPE': True,
     'SEND_ACTIVATION_EMAIL': True,
     'TOKEN_MODEL': None,
     'SOCIAL_AUTH_ALLOWED_REDIRECT_URIS': getenv('ALLOWED_REDIRECT_URLS').split(','),
@@ -165,9 +166,9 @@ DJOSER = {
 DOMAIN = getenv('WEB_HOST')
 SITE_NAME = 'Tochly'
 
-# corse settings
+# cors settings
 CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS').split(',')
-CORSE_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
 # email settings
 EMAIL_BACKEND = 'django_ses.SESBackend'
