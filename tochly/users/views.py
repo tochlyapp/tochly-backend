@@ -2,13 +2,18 @@ from django.conf import settings
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from djoser.social.views import ProviderAuthView
 from rest_framework_simplejwt.views import (
   TokenObtainPairView,
   TokenRefreshView,
   TokenVerifyView
 )
+
+from users.serializers import ProfileSerializer
+from users.models import Profile
+from members.models import Team
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -110,3 +115,37 @@ class CustomProviderAuthView(ProviderAuthView):
             )
         
         return response
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    serializer_class = ProfileSerializer
+
+    def get_queryset(self):
+        return Profile.objects.filter(user__id=self.request.user.id)
+
+    def get_instance(self):
+        return self.request.user.profile
+
+    @action(["get", "put", "patch", "delete"], detail=False)
+    def me(self, request, *args, **kwargs):
+        self.get_object = self.get_instance
+        if request.method == "GET":
+            return self.retrieve(request, *args, **kwargs)
+        elif request.method == "PUT":
+            return self.update(request, *args, **kwargs)
+        elif request.method == "PATCH":
+            return self.partial_update(request, *args, **kwargs)
+        elif request.method == "DELETE":
+            return self.destroy(request, *args, **kwargs)
+
+class TeamProfilesViewSet(APIView):
+    def get(self, request, tid):
+        team = Team.objects.get(tid=tid)
+        team_profiles = [
+            member.user.profile for member in team.member_set.all()
+        ]
+        return Response(team_profiles, status=status.HTTP_200_OK)
+        
+class UserTeamsViewSet(APIView):
+    def get(self, request):
+        user_teams = [member.team for member in request.user.member_set.all()]
+        return Response(user_teams, status=status.HTTP_200_OK)

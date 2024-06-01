@@ -16,6 +16,6 @@ DATABASES = {
         'NAME': getenv('DB_NAME'),
         'USER': getenv('DB_USER'),
         'PASSWORD': getenv('DB_PASSWORD'),
-        'HOST':getenv('HOST')
+        'HOST': getenv('HOST'),
     }
 }

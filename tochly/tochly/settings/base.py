@@ -35,7 +35,6 @@ SITE_ID = 1
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
     'users.apps.UsersConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -81,7 +80,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'tochly.wsgi.application'
-ASGI_APPLICATION = 'tochly.asgi.application'
 
 AUTH_USER_MODEL = 'users.User'
 AUTH_COOKIE = 'access'
@@ -90,7 +88,7 @@ AUTH_COOKIE_REFRESH_MAX_AGE = 60 * 60 * 24
 AUTH_COOKIE_HTTP_ONLY = True
 AUTH_COOKIE_SECURE = getenv('AUTH_COOKIE_SECURE', 'True') == 'True'
 AUTH_COOKIE_PATH = '/'
-AUTH_COOKIE_SAMESITE = 'None'
+AUTH_COOKIE_SAMESITE = 'Strict'
 
 
 # Password validation
