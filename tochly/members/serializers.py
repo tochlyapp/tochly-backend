@@ -7,7 +7,7 @@ class TeamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Team
-        fields = "__all__"
+        fields = '__all__'
 
 
 class MemberSerializer(serializers.ModelSerializer):
@@ -16,4 +16,4 @@ class MemberSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Member
-        fields = "__all__"
+        fields = '__all__'

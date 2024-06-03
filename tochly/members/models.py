@@ -25,11 +25,11 @@ class Member(models.Model):
     ]
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
-        related_name="members", 
+        related_name='members', 
         on_delete=models.CASCADE,
     )
     team = models.ForeignKey(
-        Team, related_name="members", on_delete=models.CASCADE
+        Team, related_name='members', on_delete=models.CASCADE
     )
     permission = models.CharField(
         max_length=10, choices=PERMISSIONS, default='member',
