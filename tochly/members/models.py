@@ -5,7 +5,7 @@ from members.utils import generate_team_id
 
 
 class Team(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50, unique=True, db_index=True)
     tid = models.CharField(
         max_length=10, unique=True, db_index=True, default=generate_team_id,
     )
@@ -24,11 +24,16 @@ class Member(models.Model):
         ('MEMBER', 'member'),
     ]
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
+        settings.AUTH_USER_MODEL, 
+        related_name="members", 
+        on_delete=models.CASCADE,
     )
-    team = models.ForeignKey(Team, related_name="members", on_delete=models.CASCADE)
+    team = models.ForeignKey(
+        Team, related_name="members", on_delete=models.CASCADE
+    )
     permission = models.CharField(
         max_length=10, choices=PERMISSIONS, default='member',
     )
+    is_active = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)

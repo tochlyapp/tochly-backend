@@ -11,8 +11,8 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class MemberSerializer(serializers.ModelSerializer):
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
-    team = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.StringRelatedField(read_only=True)
+    team = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Member

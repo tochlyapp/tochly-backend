@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import (
 )
 
 from users.serializers import ProfileSerializer
+from members.serializers import TeamSerializer
 from users.models import Profile
 from members.models import Team
 
@@ -141,11 +142,12 @@ class TeamProfilesViewSet(APIView):
     def get(self, request, tid):
         team = Team.objects.get(tid=tid)
         team_profiles = [
-            member.user.profile for member in team.member_set.all()
+            member.user.profile for member in team.members.all()
         ]
         return Response(team_profiles, status=status.HTTP_200_OK)
         
 class UserTeamsViewSet(APIView):
     def get(self, request):
-        user_teams = [member.team for member in request.user.member_set.all()]
-        return Response(user_teams, status=status.HTTP_200_OK)
+        user_teams = [member.team for member in request.user.members.all()]
+        serializer = TeamSerializer(user_teams, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
