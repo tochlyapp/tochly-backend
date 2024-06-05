@@ -34,12 +34,23 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         team_id = self.kwargs['team_pk']
+        email = self.request.data.get('user')
+
         try:
-            user = User.objects.get(email=self.request.data.get('user'))
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise ValidationError("User does not exist", 400)
         try:
             team = Team.objects.get(pk=team_id)
         except Team.DoesNotExist:
-            raise ValidationError(f"No team with team_id {team_id} exist", 400)
-        serializer.save(user=user, team=team)
+            raise ValidationError(
+                f"No team with team_id {team_id} exist", 400
+            )
+        try:
+            Member.objects.get(user=user, team=team)
+        except Member.DoesNotExist:
+            serializer.save(user=user, team=team)
+        else:
+            raise ValidationError(
+                f"User with email {email} is already a member"
+            )

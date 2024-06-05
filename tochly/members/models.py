@@ -19,9 +19,9 @@ class Team(models.Model):
 
 class Member(models.Model):
     PERMISSIONS = [
-        ('OWNER', 'owner'),
-        ('ADMIN', 'admin'),
-        ('MEMBER', 'member'),
+        ('OWNER', 'Owner'),
+        ('ADMIN', 'Admin'),
+        ('MEMBER', 'Member'),
     ]
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
