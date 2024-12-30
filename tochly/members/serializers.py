@@ -1,7 +1,13 @@
+from django.contrib.auth import get_user_model
+
 from rest_framework import serializers
+
+from users.serializers import UserSerializer
 
 from members.models import Team, Member
 
+
+User = get_user_model()
 
 class TeamSerializer(serializers.ModelSerializer):
 
@@ -17,3 +23,8 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = UserSerializer(instance.user).data
+        return representation

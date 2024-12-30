@@ -35,6 +35,8 @@ class MemberViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         team_id = self.kwargs['team_pk']
         email = self.request.data.get('user')
+        print('=======================================================')
+        print('data', self.request.data)
 
         try:
             user = User.objects.get(email=email)

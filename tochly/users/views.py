@@ -138,6 +138,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         elif request.method == 'DELETE':
             return self.destroy(request, *args, **kwargs)
 
+
 class TeamProfilesViewSet(APIView):
     def get(self, request, tid):
         team = Team.objects.get(tid=tid)

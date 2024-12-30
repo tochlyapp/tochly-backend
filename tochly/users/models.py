@@ -72,6 +72,7 @@ class Profile(models.Model):
         null=True,
     )
     timezone = models.CharField(max_length=50, blank=True, null=True)
+    dark_mode = models.BooleanField(default=False)
 
     @property
     def email(self):
