@@ -13,3 +13,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = '__all__'
+
+    def create(self, validated_data):
+        user = validated_data.pop('user', None)
+        if not user:
+            raise serializers.ValidationError({"user": "User is required"})
+        return Profile.objects.create(user=user, **validated_data)

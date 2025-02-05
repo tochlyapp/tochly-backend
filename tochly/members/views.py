@@ -2,8 +2,10 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, generics
 from rest_framework.serializers import ValidationError
+
+from users.serializers import ProfileSerializer 
 
 from members.serializers import TeamSerializer, MemberSerializer
 from members.models import Team, Member
@@ -35,18 +37,16 @@ class MemberViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         team_id = self.kwargs['team_pk']
         email = self.request.data.get('user')
-        print('=======================================================')
-        print('data', self.request.data)
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise ValidationError("User does not exist", 400)
+            raise ValidationError('User does not exist', 400)
         try:
             team = Team.objects.get(pk=team_id)
         except Team.DoesNotExist:
             raise ValidationError(
-                f"No team with team_id {team_id} exist", 400
+                f'No team with team_id {team_id} exist', 400
             )
         try:
             Member.objects.get(user=user, team=team)
@@ -54,5 +54,20 @@ class MemberViewSet(viewsets.ModelViewSet):
             serializer.save(user=user, team=team)
         else:
             raise ValidationError(
-                f"User with email {email} is already a member"
+                f'User with email {email} is already a member'
             )
+
+
+class TeamMembersListView(generics.ListAPIView):
+    serializer_class = ProfileSerializer
+
+    def get_queryset(self):
+        team_id = self.kwargs['team_id']
+        return [member.user.profile for member in Member.objects.filter(team__id=team_id)]
+
+
+class UserTeamsListView(generics.ListAPIView):
+    serializer_class = TeamSerializer
+
+    def get_queryset(self):
+        return [member.team for member in Member.objects.filter(user=self.request.user)]

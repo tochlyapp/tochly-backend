@@ -51,11 +51,11 @@ class User(AbstractUser):
 class Profile(models.Model):
     STATUS_OPTIONS = [
         ('', ''),
-        ('In a Meeting', 'meeting'),
-        ('Commuting', 'commuting'),
-        ('Working Remotely', 'remote'),
-        ('Sick', 'sick'),
-        ('In Leave', 'leave'),
+        ('meeting', 'In a Meeting'),
+        ('commuting', 'Commuting'),
+        ('remote', 'Working Remotely'),
+        ('sick', 'Sick'),
+        ('leave', 'In Leave'),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     display_name = models.CharField(max_length=50, blank=True, null=True)

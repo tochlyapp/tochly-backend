@@ -1,15 +1,17 @@
 from django.conf import settings
 
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from djoser.social.views import ProviderAuthView
 from rest_framework_simplejwt.views import (
   TokenObtainPairView,
   TokenRefreshView,
   TokenVerifyView
 )
+
+from djoser.social.views import ProviderAuthView
 
 from users.serializers import ProfileSerializer
 from members.serializers import TeamSerializer
@@ -52,7 +54,10 @@ class CustomTokenRefreshView(TokenRefreshView):
         refresh_token = request.COOKIES.get('refresh')
 
         if refresh_token:
-            request.data['refresh'] = refresh_token
+            # request.data is immutable
+            mutable_data = request.data.copy()
+            mutable_data['refresh'] = refresh_token
+            request._full_data = mutable_data
 
         response = super().post(request, *args, **kwargs)
 
@@ -76,11 +81,16 @@ class CustomTokenVerifyView(TokenVerifyView):
         access_token = request.COOKIES.get('access')
 
         if access_token:
-            request.data['token'] = access_token
+            # request.data is immutable
+            mutable_data = request.data.copy()
+            mutable_data['token'] = access_token
+            request._full_data = mutable_data
         
         return super().post(request, *args, **kwargs)
 
 class LogoutView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def post(self, request):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('access')
@@ -137,18 +147,3 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return self.partial_update(request, *args, **kwargs)
         elif request.method == 'DELETE':
             return self.destroy(request, *args, **kwargs)
-
-
-class TeamProfilesViewSet(APIView):
-    def get(self, request, tid):
-        team = Team.objects.get(tid=tid)
-        team_profiles = [
-            member.user.profile for member in team.members.all()
-        ]
-        return Response(team_profiles, status=status.HTTP_200_OK)
-        
-class UserTeamsViewSet(APIView):
-    def get(self, request):
-        user_teams = [member.team for member in request.user.members.all()]
-        serializer = TeamSerializer(user_teams, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
