@@ -49,6 +49,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
         return response
 
+
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get('refresh')
@@ -76,6 +77,7 @@ class CustomTokenRefreshView(TokenRefreshView):
           
         return response
 
+
 class CustomTokenVerifyView(TokenVerifyView):
     def post(self, request, *args, **kwargs):
         access_token = request.COOKIES.get('access')
@@ -88,6 +90,7 @@ class CustomTokenVerifyView(TokenVerifyView):
         
         return super().post(request, *args, **kwargs)
 
+
 class LogoutView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -96,6 +99,7 @@ class LogoutView(APIView):
         response.delete_cookie('access')
         response.delete_cookie('refresh')
         return response
+
 
 class CustomProviderAuthView(ProviderAuthView):
     def post(self, request, *args, **kwargs):
@@ -126,6 +130,7 @@ class CustomProviderAuthView(ProviderAuthView):
             )
         
         return response
+
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer

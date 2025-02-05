@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from users.models import Profile
 
+
 User = get_user_model()
 
 class ProfileModelTests(TestCase):
@@ -22,7 +23,6 @@ class ProfileModelTests(TestCase):
             status='meeting',
             timezone='UTC'
         )
-
 
     def test_model_field_definitions(self):
         # Test user relationship

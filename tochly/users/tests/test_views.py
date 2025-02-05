@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 from users.models import Profile
 
+
 User = get_user_model()
 
 class TestCustomTokenObtainPairView(TestCase):

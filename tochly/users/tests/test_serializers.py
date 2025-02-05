@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from users.models import Profile
 from users.serializers import UserSerializer, ProfileSerializer
 
+
 User = get_user_model()
 
 class UserSerializerTests(TestCase):
