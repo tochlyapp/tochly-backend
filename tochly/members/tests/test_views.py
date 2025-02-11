@@ -36,12 +36,10 @@ class TeamViewSetTests(BaseAPITestCaseAuthenticated):
         self.assertEqual(response.data['name'], 'Team Alpha')
 
     def test_create_team(self):
-        tid = 'T45678901'
-        data = {'tid': tid, 'name': 'Team Delta'}
+        data = {'name': 'Team Delta'}
         response = self.client.post(reverse('teams-list'), data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Team.objects.count(), 4)
-        self.assertEqual(Team.objects.get(tid=tid).name, 'Team Delta')
 
     def test_update_team(self):
         tid = self.team1.tid
@@ -72,7 +70,7 @@ class MemberViewSetTestCase(BaseAPITestCaseAuthenticated):
     def setUp(self):
         super().setUp()
         self.team = Team.objects.create(name='Test Team')
-        self.user_2 = User.objects.create_user(
+        self.other_user = User.objects.create_user(
             email='newuser@example.com',
             password='password123',
             first_name='Ahmad',
@@ -80,12 +78,11 @@ class MemberViewSetTestCase(BaseAPITestCaseAuthenticated):
         )
 
         self.profile1 = Profile.objects.create(user=self.user, display_name="User 1 name")
-        self.profile2 = Profile.objects.create(user=self.user_2, display_name="User 2 name")
+        self.profile2 = Profile.objects.create(user=self.other_user, display_name="User 2 name")
 
         self.member = Member.objects.create(user=self.user, team=self.team)
 
         self.url = reverse('team-members-list', kwargs={'team_tid': self.team.tid})
-        # self.members_url = '/api/members/'
 
     def test_list_members(self):
         """Test retrieving members' profiles."""
@@ -96,7 +93,7 @@ class MemberViewSetTestCase(BaseAPITestCaseAuthenticated):
         self.assertEqual(response.data[0]['display_name'], "User 1 name")
 
     def test_create_member_success(self):
-        data = {"user": 'newuser@example.com'}
+        data = {'user': self.other_user.id}
 
         response = self.client.post(self.url, data)
 
@@ -105,21 +102,21 @@ class MemberViewSetTestCase(BaseAPITestCaseAuthenticated):
 
     def test_create_member_already_exists(self):
         """Test trying to add an existing user to the same team."""
-        data = {'user': 'testuser@example.com'}
+        data = {'user': self.user.id}
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("already a member", str(response.data))
+        self.assertIn('already a member', str(response.data))
 
     def test_create_member_user_does_not_exist(self):
         """
         Test adding a member when the user does not exist.
         """
-        data = {'user': 'nonexistent@example.com'}
+        data = {'user': 99}
 
         response = self.client.post(self.url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_member_team_does_not_exist(self):
         """
@@ -127,30 +124,44 @@ class MemberViewSetTestCase(BaseAPITestCaseAuthenticated):
         """
         invalid_url = reverse('team-members-list', kwargs={'team_tid': 'T56789012'})  # Non-existent team ID
 
-        data = {'user': 'newuser@example.com'}
+        data = {'user': self.other_user.id}
         response = self.client.post(invalid_url, data)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(str(response.data['detail']), 'Not found.')
 
-    # def test_create_member_user_already_a_member(self):
-    #     """
-    #     Test adding a user who is already a member.
-    #     """
-    #     Member.objects.create(user=self.user, team=self.team)  # User already a member
-    #     data = {'user': self.user.email}
 
-    #     response = self.client.post(self.members_url, data)
+class UserTeamsListViewTest(BaseAPITestCaseAuthenticated):
+    def setUp(self):
+        super().setUp()
+        self.other_user = User.objects.create_user(
+            email='newuser@example.com',
+            password='password123',
+            first_name='Ahmad',
+            last_name='Ameen'
+        )
 
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    #     self.assertEqual(str(response.data[0]), f'User with email {self.user.email} is already a member.')
+        self.team1 = Team.objects.create(name='Team A')
+        self.team2 = Team.objects.create(name='Team B')
+        self.team3 = Team.objects.create(name='Team C')
 
-    def test_get_members_filtered_by_team(self):
-        """
-        Test retrieving members filtered by team.
-        """
-        response = self.client.get(self.url, format='json')
+        Member.objects.create(user=self.user, team=self.team1)
+        Member.objects.create(user=self.user, team=self.team2)
+
+        Member.objects.create(user=self.other_user, team=self.team3)
+
+        self.url = '/api/users/teams/'
+
+    def test_user_teams_list(self):
+        """Test that the API returns only the teams of the authenticated user"""
+        response = self.client.get(self.url)
+
+        returned_team_names = {team['name'] for team in response.json()}
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # Only one member in the team
-        self.assertEqual(response.data[0]['user'], 'testuser@example.com')
+        self.assertSetEqual(returned_team_names, {'Team A', 'Team B'})
+
+    def test_unauthenticated_request(self):
+        self.unauthenticate()
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

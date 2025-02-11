@@ -32,8 +32,9 @@ class MemberViewSet(viewsets.ModelViewSet):
     serializer_class = MemberSerializer
 
     def get_queryset(self):
-        team_id = self.kwargs['team_pk']
-        return Member.objects.filter(team_id=team_id)
+        tid = self.kwargs['team_tid']
+        team = get_object_or_404(Team, tid=tid)
+        return Member.objects.filter(team=team)
 
     def list(self, request, *args, **kwargs):
         """Returns the list of user profiles instead of Member instances."""
@@ -44,13 +45,13 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Handles member creation, ensuring user and team exist."""
-        email = self.request.data.get('user')
+        user_pk = self.request.data.get('user')
 
-        team = get_object_or_404(Team, pk=self.kwargs['team_pk'])
-        user = get_object_or_404(User, email=email)
+        team = get_object_or_404(Team, tid=self.kwargs['team_tid'])
+        user = get_object_or_404(User, id=user_pk)
 
         if Member.objects.filter(user=user, team=team).exists():
-            raise ValidationError(f"User with email {email} is already a member.")
+            raise ValidationError(f"User with email {user.email} is already a member.")
 
         serializer.save(user=user, team=team)
 
@@ -59,4 +60,4 @@ class UserTeamsListView(generics.ListAPIView):
     serializer_class = TeamSerializer
 
     def get_queryset(self):
-        return [member.team for member in Member.objects.filter(user=self.request.user)]
+        return Team.objects.filter(members__user=self.request.user).distinct()

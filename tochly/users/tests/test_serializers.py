@@ -100,10 +100,11 @@ class ProfileSerializerTests(TestCase):
         """Test serialization of Profile instance to JSON"""
         serializer = ProfileSerializer(instance=self.profile)
         
-        # Get dynamically generated ID
         expected_data = {
             'id': self.profile.id,
             'user': self.user.id,
+            'email': 'john.doe@example.com',
+            'full_name': 'John Doe',
             'display_name': 'Test User',
             'title': None,
             'phone_number': '+1234567890',
