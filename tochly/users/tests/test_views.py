@@ -10,6 +10,7 @@ from rest_framework import status
 
 from unittest.mock import patch
 
+from core.tests.base import BaseAPITestCaseAuthenticated
 from users.models import Profile
 
 
@@ -43,7 +44,7 @@ class TestCustomTokenObtainPairView(TestCase):
         
     def test_failed_login_does_not_set_cookies(self):
         response = self.client.post(
-            '/api/jwt/create/', 
+            reverse('token-obtain-pair'),
             {'email': 'ahmadmameen7@gmail.com', 'password': 'wrongPassword123'}
         )
         
@@ -61,9 +62,9 @@ class TestCustomTokenRefreshView(APITestCase):
             first_name='Ahmad',
             last_name='Ameen',
         )
-        self.refresh_token_url = reverse('token_refresh')
+        self.refresh_token_url = reverse('token-refresh')
         login_response = self.client.post(
-            reverse('token_obtain_pair'),
+            reverse('token-obtain-pair'),
             {'email': 'ahmadmameen7@gmail.com', 'password': 'testpass123'}
         )
         self.refresh_token = login_response.data.get('refresh')
@@ -142,7 +143,7 @@ class TestCustomTokenVerifyView(APITestCase):
         )
         self.client = APIClient()
         self.access_token = str(RefreshToken.for_user(self.user).access_token)
-        self.url = reverse('token_verify')
+        self.url = reverse('token-verify')
 
     def test_valid_token_in_cookie(self):
         self.client.cookies['access'] = self.access_token
@@ -187,7 +188,7 @@ class TestCustomTokenVerifyView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class LogoutViewTestCas(TestCase):
+class LogoutViewTestCase(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email='ahmadmameen7@gmail.com', 
@@ -198,6 +199,13 @@ class LogoutViewTestCas(TestCase):
         self.access_token = str(RefreshToken.for_user(self.user).access_token)
         self.client = APIClient()
         self.url = reverse('logout')
+
+    def test_logout_unauthorized_access(self):
+        self.client.post(self.url)
+
+        # Attempt to log out again
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_logout_post_returns_204(self):
         self.client.cookies['access'] = self.access_token
@@ -219,15 +227,9 @@ class LogoutViewTestCas(TestCase):
         self.assertIsNotNone(refresh_cookie, '')
 
 
-class ProfileViewSetTest(TestCase):
+class ProfileViewSetTest(BaseAPITestCaseAuthenticated):
     def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(
-            email='ahmadmameen7@gmail.com', 
-            password='testpassword',
-            first_name='Ahmad',
-            last_name='Ameen',
-        )
+        super().setUp()
         self.profile = Profile.objects.create(
             user=self.user, 
             display_name='Ahmad Ameen',
@@ -236,24 +238,20 @@ class ProfileViewSetTest(TestCase):
 
         self.url = '/api/profiles/me/'
 
-    def authenticate(self):
-        self.client.force_authenticate(user=self.user)
-
     def test_get_user_profile_authenticated(self):
         """Test that an authenticated user can retrieve their profile."""
-        self.authenticate()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['display_name'], 'Ahmad Ameen')
 
     def test_get_user_profile_unauthenticated(self):
         """Test that an unauthenticated user cannot retrieve a profile."""
+        self.unauthenticate()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_update_user_profile_authenticated(self):
         """Test that an authenticated user can update their profile."""
-        self.authenticate()
         data = {'display_name': 'Ahmad M'}
         response = self.client.put(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -262,7 +260,6 @@ class ProfileViewSetTest(TestCase):
 
     def test_partial_update_user_profile_authenticated(self):
         """Test that an authenticated user can partially update their profile."""
-        self.authenticate()
         data = {'phone_number': '+2349068387166'}
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -271,12 +268,12 @@ class ProfileViewSetTest(TestCase):
 
     def test_delete_user_profile_authenticated(self):
         """Test that an authenticated user can delete their profile."""
-        self.authenticate()
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Profile.objects.filter(user=self.user).exists())
 
     def test_delete_user_profile_unauthenticated(self):
         """Test that an unauthenticated user cannot delete a profile."""
+        self.unauthenticate()
         response = self.client.delete(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

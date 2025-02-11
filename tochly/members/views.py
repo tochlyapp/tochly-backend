@@ -15,55 +15,44 @@ User = get_user_model()
 
 class TeamViewSet(viewsets.ModelViewSet):
     serializer_class = TeamSerializer
+    queryset = Team.objects.all()
+    lookup_field = 'tid'
 
     def get_queryset(self):
+        queryset = super().get_queryset()
         name = self.request.query_params.get('name')
+
         if name:
-            return Team.objects.filter(name=name)
+            queryset = queryset.filter(name__icontains=name)
 
-        return Team.objects.all()
-
-    def retrieve(self, request, pk):
-        team = get_object_or_404(Team, tid=pk)
-        serializer = TeamSerializer(team)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return queryset
 
 class MemberViewSet(viewsets.ModelViewSet):
+    """Handles member creation and retrieval."""
     serializer_class = MemberSerializer
 
     def get_queryset(self):
-        return Member.objects.filter(team_id=self.kwargs['team_pk'])
+        team_id = self.kwargs['team_pk']
+        return Member.objects.filter(team_id=team_id)
+
+    def list(self, request, *args, **kwargs):
+        """Returns the list of user profiles instead of Member instances."""
+        members = self.get_queryset()
+        profiles = [member.user.profile for member in members]
+        serializer = ProfileSerializer(profiles, many=True)
+        return Response(serializer.data)
 
     def perform_create(self, serializer):
-        team_id = self.kwargs['team_pk']
+        """Handles member creation, ensuring user and team exist."""
         email = self.request.data.get('user')
 
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise ValidationError('User does not exist', 400)
-        try:
-            team = Team.objects.get(pk=team_id)
-        except Team.DoesNotExist:
-            raise ValidationError(
-                f'No team with team_id {team_id} exist', 400
-            )
-        try:
-            Member.objects.get(user=user, team=team)
-        except Member.DoesNotExist:
-            serializer.save(user=user, team=team)
-        else:
-            raise ValidationError(
-                f'User with email {email} is already a member'
-            )
+        team = get_object_or_404(Team, pk=self.kwargs['team_pk'])
+        user = get_object_or_404(User, email=email)
 
+        if Member.objects.filter(user=user, team=team).exists():
+            raise ValidationError(f"User with email {email} is already a member.")
 
-class TeamMembersListView(generics.ListAPIView):
-    serializer_class = ProfileSerializer
-
-    def get_queryset(self):
-        team_id = self.kwargs['team_id']
-        return [member.user.profile for member in Member.objects.filter(team__id=team_id)]
+        serializer.save(user=user, team=team)
 
 
 class UserTeamsListView(generics.ListAPIView):

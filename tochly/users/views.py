@@ -136,19 +136,29 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
 
     def get_queryset(self):
-        return Profile.objects.filter(user__id=self.request.user.id)
+        return Profile.objects.filter(user=self.request.user)
 
-    def get_instance(self):
-        return self.request.user.profile
+    def get_object(self):
+        """Override get_object to return the user's profile."""
+        try:
+            return self.request.user.profile
+        except Profile.DoesNotExist:
+            raise NotFound("Profile not found.")
 
     @action(['get', 'put', 'patch', 'delete'], detail=False)
     def me(self, request, *args, **kwargs):
-        self.get_object = self.get_instance
+        profile = self.get_object()
+        
         if request.method == 'GET':
-            return self.retrieve(request, *args, **kwargs)
-        elif request.method == 'PUT':
-            return self.update(request, *args, **kwargs)
-        elif request.method == 'PATCH':
-            return self.partial_update(request, *args, **kwargs)
+            serializer = self.get_serializer(profile)
+            return Response(serializer.data)
+
+        elif request.method in ['PUT', 'PATCH']:
+            serializer = self.get_serializer(profile, data=request.data, partial=request.method == 'PATCH')
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
         elif request.method == 'DELETE':
-            return self.destroy(request, *args, **kwargs)
+            profile.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)

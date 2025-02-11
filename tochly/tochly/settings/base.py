@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'djoser',
     'social_django',
     'members.apps.MembersConfig',
+    'core.apps.CoreConfig',
 ]
 
 MIDDLEWARE = [

@@ -11,10 +11,18 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    email = serializers.SerializerMethodField(read_only=True)
+    full_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Profile
         fields = '__all__'
+
+    def get_full_name(self, obj):
+        return obj.full_name
+
+    def get_email(self, obj):
+        return obj.email
 
     def create(self, validated_data):
         user = validated_data.pop('user', None)

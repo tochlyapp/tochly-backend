@@ -18,10 +18,10 @@ class Team(models.Model):
 
 
 class Member(models.Model):
-    PERMISSIONS = [
-        ('OWNER', 'Owner'),
-        ('ADMIN', 'Admin'),
-        ('MEMBER', 'Member'),
+    ROLES = [
+        ('owner', 'OWNER'),
+        ('admin', 'ADMIN'),
+        ('member', 'MEMBER'),
     ]
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -31,9 +31,13 @@ class Member(models.Model):
     team = models.ForeignKey(
         Team, related_name='members', on_delete=models.CASCADE
     )
-    permission = models.CharField(
-        max_length=10, choices=PERMISSIONS, default='member',
+    role = models.CharField(
+        max_length=10, choices=ROLES, default='member',
     )
     is_active = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
+
+    @property
+    def tid(self):
+      return self.team.tid

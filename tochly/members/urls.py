@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from members.views import TeamViewSet, MemberViewSet, UserTeamsListView, TeamMembersListView
+from members.views import TeamViewSet, MemberViewSet, UserTeamsListView
 
 
 router = routers.SimpleRouter()
@@ -12,7 +12,6 @@ teams_router.register(r'members', viewset=MemberViewSet, basename='team-members'
 
 urlpatterns = [
     path('users/teams/', UserTeamsListView.as_view(), name='user-teams'),
-    path('teams/<int:team_id>/members/', TeamMembersListView.as_view(), name='team-members'),
     path(r'', include(router.urls)),
     path(r'', include(teams_router.urls)),
 ]
