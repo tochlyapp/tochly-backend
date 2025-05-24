@@ -6,9 +6,8 @@ djangorestframework-simplejwt==5.3.1
 djoser==2.2.2
 python-dotenv==1.0.0
 django-ses==3.5.2
-django-cors-headers==4.3.1
+django-cors-headers==4.3.1 
 social-auth-app-django==5.4.0
 drf-nested-routers==0.94.1
 celery>=5.2,<6.0
-eventlet>=0.33.0
 redis>=4.3,<5.0
