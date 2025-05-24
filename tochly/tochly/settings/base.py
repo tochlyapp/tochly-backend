@@ -10,17 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
-from os import getenv, path
+from os import getenv
 from pathlib import Path
-import dotenv
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # load env config
-env_file = BASE_DIR / '.env.local'
-if path.isfile(BASE_DIR / '.env.local'):
-    dotenv.load_dotenv(dotenv_path=env_file, verbose=True)
+load_dotenv(dotenv_path=BASE_DIR / '../.env.dev')
 
 
 # Quick-start development settings - unsuitable for production

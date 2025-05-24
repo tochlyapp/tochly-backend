@@ -130,5 +130,6 @@ dmypy.json
 
 # custom
 .env.local
+.env.dev
 .DS_Store
 **/.DS_Store

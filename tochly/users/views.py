@@ -15,9 +15,7 @@ from rest_framework_simplejwt.views import (
 from djoser.social.views import ProviderAuthView
 
 from users.serializers import ProfileSerializer
-from members.serializers import TeamSerializer
 from users.models import Profile
-from members.models import Team
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -95,7 +93,7 @@ class CustomTokenVerifyView(TokenVerifyView):
 class LogoutView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def post(self, request):
+    def post(self):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('access')
         response.delete_cookie('refresh')
@@ -135,21 +133,21 @@ class CustomProviderAuthView(ProviderAuthView):
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
+    queryset = Profile.objects.all()
 
     def get_queryset(self):
-        return Profile.objects.filter(user=self.request.user)
-
-    def get_object(self):
-        """Override get_object to return the user's profile."""
-        try:
-            return self.request.user.profile
-        except Profile.DoesNotExist:
-            raise NotFound("Profile not found.")
-
-    @action(['get', 'put', 'patch', 'delete'], detail=False)
-    def me(self, request, *args, **kwargs):
-        profile = self.get_object()
+        user_id = self.request.query_params.get('user_id')
+        if user_id:
+            return Profile.objects.filter(user__id=user_id)
+        return super().get_queryset()
         
+    @action(['get', 'put', 'patch', 'delete'], detail=False)
+    def me(self, request):
+        try:
+            profile = request.user.profile
+        except Profile.DoesNotExist:
+            raise NotFound('Profile not found')
+
         if request.method == 'GET':
             serializer = self.get_serializer(profile)
             return Response(serializer.data)

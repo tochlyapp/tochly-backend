@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    command: gunicorn tochly.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - .env
+    working_dir: /tochly
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build: .
+    user: celeryuser
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+
+volumes:
+  pgdata:

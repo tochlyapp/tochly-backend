@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 
 from rest_framework.response import Response
-from rest_framework import status, viewsets, generics
+from rest_framework import viewsets, generics
 from rest_framework.serializers import ValidationError
 
 from users.serializers import ProfileSerializer 
@@ -33,13 +33,29 @@ class MemberViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tid = self.kwargs['team_tid']
+        user_id = self.request.query_params.get('user_id')
         team = get_object_or_404(Team, tid=tid)
+        if user_id:
+            return Member.objects.filter(team=team, user_id=user_id)
+        
         return Member.objects.filter(team=team)
 
     def list(self, request, *args, **kwargs):
         """Returns the list of user profiles instead of Member instances."""
-        members = self.get_queryset()
-        profiles = [member.user.profile for member in members]
+        search_query = request.query_params.get('search', '').strip().lower()
+        limit = request.query_params.get('limit')
+
+        queryset = self.get_queryset()
+        profiles = [member.user.profile for member in queryset]
+
+        if search_query:
+            profiles = [
+                p for p in profiles if search_query in p.full_name.lower()
+            ]
+
+        if limit and limit.isdigit():
+            profiles = profiles[:int(limit)]
+
         serializer = ProfileSerializer(profiles, many=True)
         return Response(serializer.data)
 

@@ -1,10 +1,21 @@
+import os
+from dotenv import load_dotenv
 from .base import *
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# load env config
+load_dotenv(dotenv_path=BASE_DIR / '../.env.dev')
+
+
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'host.docker.internal']
+
+# celery
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
+CELERY_TASK_SERIALIZER = 'json'
 
 
 # Database
@@ -16,6 +27,7 @@ DATABASES = {
         'NAME': getenv('DB_NAME'),
         'USER': getenv('DB_USER'),
         'PASSWORD': getenv('DB_PASSWORD'),
-        'HOST': getenv('HOST'),
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
