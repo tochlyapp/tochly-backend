@@ -37,11 +37,6 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = (
         'email', 
         'full_name', 
-        'display_name', 
-        'title', 
-        'phone_number', 
-        'online', 
-        'status', 
         'timezone',
     )
-    search_fields = ('full_name', 'display_name', 'email', 'phone_number')
+    search_fields = ('full_name',)
