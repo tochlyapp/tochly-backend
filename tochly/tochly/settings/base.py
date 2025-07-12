@@ -13,13 +13,13 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 from os import getenv
 from pathlib import Path
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # load env config
 load_dotenv(dotenv_path=BASE_DIR / '../.env.dev')
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -29,11 +29,10 @@ SECRET_KEY = getenv("SECRET_KEY")
 
 SITE_ID = 1
 
-
 # Application definition
 
 INSTALLED_APPS = [
-    'users.apps.UsersConfig',
+    'users',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,8 +44,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'social_django',
-    'members.apps.MembersConfig',
-    'core.apps.CoreConfig',
+    'members',
+    'core',
+    'invitations',
 ]
 
 MIDDLEWARE = [
@@ -89,6 +89,11 @@ AUTH_COOKIE_SECURE = getenv('AUTH_COOKIE_SECURE', 'True') == 'True'
 AUTH_COOKIE_PATH = '/'
 AUTH_COOKIE_SAMESITE = 'Strict'
 
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=AUTH_COOKIE_ACCESS_MAX_AGE),
+    'REFRESH_TOKEN_LIFETIME': timedelta(seconds=AUTH_COOKIE_REFRESH_MAX_AGE),
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -175,6 +180,7 @@ AWS_SES_ACCESS_KEY_ID = getenv('AWS_SES_ACCESS_KEY_ID')
 AWS_SES_SECRET_ACCESS_KEY = getenv('AWS_SES_SECRET_ACCESS_KEY')
 AWS_SES_REGION_NAME = getenv('AWS_SES_REGION_NAME')
 AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
+AWS_SES_AUTO_THROTTLE = 0.5  # seconds
 USE_SES_V2 = True
 
 # google social auth settings

@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 from django.utils.timezone import make_aware
@@ -11,12 +12,12 @@ User =  get_user_model()
 
 class TeamModelTestCase(TestCase):
     def test_create_team_with_minimal_required_fields(self):
-        team = Team.objects.create(name='Development Team')
-        self.assertEqual(team.name, 'Development Team')
+        team = Team.objects.create(name='Team Alpha')
+        self.assertEqual(team.name, 'Team Alpha')
         self.assertEqual(len(team.tid), 9)
         self.assertIsNotNone(team.created)
-        self.assertIsNotNone(team.last_updated)
-        self.assertAlmostEqual(team.created, team.last_updated, delta=timedelta(microseconds=100))
+        self.assertIsNotNone(team.updated)
+        self.assertAlmostEqual(team.created, team.updated, delta=timedelta(microseconds=100))
 
     def test_name_uniqueness_enforcement(self):
         Team.objects.create(name='Marketing Team', tid='MKT123')
@@ -43,7 +44,7 @@ class TeamModelTestCase(TestCase):
         test_time = make_aware(datetime(2023, 1, 1))
         team = Team.objects.create(name='Old Team')
         team.created = test_time  # Simulate older creation time
-        team.last_updated = test_time
+        team.updated = test_time
         team.save()
 
         # Update team and verify timestamp change
@@ -52,7 +53,7 @@ class TeamModelTestCase(TestCase):
         team.refresh_from_db()
 
         self.assertEqual(team.created, test_time)
-        self.assertGreater(team.last_updated, test_time)
+        self.assertGreater(team.updated, test_time)
 
     def test_string_representation(self):
         """Test the __str__ method returns the team ID."""
@@ -67,34 +68,118 @@ class TeamModelTestCase(TestCase):
         self.assertTrue(team1.tid.isalnum())
 
 
-class MemberModelTestCase(TestCase):
+class MemberModelTest(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            email='ahmadmameen7@gmail.com',
-            password='password123',
-            first_name='Ahmad',
-            last_name='Ameen'
+        self.user1 = User.objects.create_user(email='user1@test.com', first_name='Ahmad', last_name='Ameen')
+        self.user2 = User.objects.create_user(email='user2@test.com', first_name='User', last_name='Two')
+        
+        # Create test teams
+        self.team1 = Team.objects.create(name='Team 1', tid='TEAM1')
+        self.team2 = Team.objects.create(name='Team 2', tid='TEAM2')
+        
+        # Create test member with unique user-team combo
+        self.member = Member.objects.create(
+            user=self.user1,
+            team=self.team1,
+            display_name='Member 1'
         )
-        self.team = Team.objects.create(name='Test Team')
 
-    def test_create_member(self):
-        member = Member.objects.create(user=self.user, team=self.team, role='admin', is_active=True)
+    def test_member_creation(self):
+        """Test that member is created with all fields"""
+        self.assertEqual(Member.objects.count(), 1)
+        self.assertEqual(self.member.user, self.user1)
+        self.assertEqual(self.member.team, self.team1)
+        self.assertEqual(self.member.role, 'member')
+        self.assertEqual(self.member.display_name, 'Member 1')
+        self.assertEqual(self.member.title, None)
+        self.assertEqual(self.member.phone_number, None)
+        self.assertFalse(self.member.online)
+        self.assertEqual(self.member.status, '')
+        self.assertEqual(self.member.profile_picture_url, None)
+        self.assertIsNotNone(self.member.created)
+        self.assertIsNotNone(self.member.updated)
 
-        self.assertEqual(member.user, self.user)
-        self.assertEqual(member.team, self.team)
-        self.assertEqual(member.role, 'admin')
-        self.assertTrue(member.is_active)
-        self.assertIsNotNone(member.created)
-        self.assertIsNotNone(member.last_updated)
+    def test_role_choices(self):
+        """Test that role choices are enforced"""
+        with self.assertRaises(ValidationError):
+            member = Member(
+                user=self.user2,
+                team=self.team2,
+                role='invalid',
+                display_name='Invalid Role'
+            )
+            member.full_clean()
 
-    def test_default_permission(self):
-        member = Member.objects.create(user=self.user, team=self.team)
-        self.assertEqual(member.role, 'member')
+    def test_status_choices(self):
+        """Test that status choices are enforced"""
+        user3 = User.objects.create_user(email='user3@test.com', first_name='User', last_name='User Three')
+        
+        # Test with valid status
+        member = Member.objects.create(
+            user=user3,
+            team=self.team1,
+            display_name='Valid Status',
+            status='meeting'
+        )
+        self.assertEqual(member.status, 'meeting')
 
-    def test_default_is_active(self):
-        member = Member.objects.create(user=self.user, team=self.team)
-        self.assertFalse(member.is_active)
+    def test_phone_number_uniqueness(self):
+        """Test phone number uniqueness constraint"""
+        with self.assertRaises(Exception):
+            Member.objects.create(
+                user=self.user,
+                team=self.team,
+                display_name='Duplicate Phone',
+                phone_number='+1234567890'
+            )
 
-    def test_created_and_last_updated(self):
-        member = Member.objects.create(user=self.user, team=self.team)
-        self.assertAlmostEqual(member.created, member.last_updated, delta=timedelta(microseconds=100))
+    def test_full_name_property(self):
+        """Test the full_name property"""
+        self.assertEqual(self.member.full_name, 'Ahmad Ameen')
+        
+        # Test with empty names
+        user2 = User.objects.create_user(
+            email='user2@example.com',
+            password='testpass123',
+            first_name='',
+            last_name=''
+        )
+        member2 = Member.objects.create(
+            user=user2,
+            team=self.team2,
+            display_name='Empty Names'
+        )
+        self.assertEqual(member2.full_name, ' ')
+
+    def test_tid_property(self):
+        """Test the tid property"""
+        self.assertEqual(self.member.tid, 'TEAM1')
+
+    def test_str_representation(self):
+        """Test the __str__ method"""
+        self.assertEqual(str(self.member), 'TEAM1')
+
+    def test_optional_fields(self):
+        """Test that optional fields can be null/blank"""
+        member = Member.objects.create(
+            user=self.user2,
+            team=self.team2,
+            display_name='Minimal Member'
+        )
+        self.assertIsNone(member.title)
+        self.assertIsNone(member.phone_number)
+        self.assertFalse(member.online)
+        self.assertEqual(member.status, '')
+        self.assertIsNone(member.profile_picture_url)
+
+    def test_user_team_unique_together(self):
+        """Test that user can only have one membership per team"""
+        # This should raise IntegrityError because the combination already exists
+        with self.assertRaises(Exception) as context:
+            Member.objects.create(
+                user=self.user1,
+                team=self.team1,
+                display_name='Duplicate Membership'
+            )
+        
+        self.assertIn('unique', str(context.exception).lower())

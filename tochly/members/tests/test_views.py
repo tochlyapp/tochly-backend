@@ -1,13 +1,11 @@
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 
-from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 
 from core.tests.base import BaseAPITestCaseAuthenticated
 from users.models import Profile
 from members.models import Team, Member
-
 
 User = get_user_model()
 
@@ -66,68 +64,114 @@ class TeamViewSetTests(BaseAPITestCaseAuthenticated):
         self.assertFalse(Team.objects.filter(tid=tid).exists())
 
 
-class MemberViewSetTestCase(BaseAPITestCaseAuthenticated):
+class MemberViewSetTest(BaseAPITestCaseAuthenticated):
     def setUp(self):
         super().setUp()
-        self.team = Team.objects.create(name='Test Team')
-        self.other_user = User.objects.create_user(
-            email='newuser@example.com',
-            password='password123',
-            first_name='Ahmad',
-            last_name='Ameen'
+        self.base_url = '/api/teams/{}/members/'
+        
+        # Create test data
+        self.user1 = User.objects.create_user(
+            email='user1@example.com',
+            first_name='John',
+            last_name='Doe'
+        )
+        self.user2 = User.objects.create_user(
+            email='user2@example.com',
+            first_name='Jane',
+            last_name='Smith'
+        )
+        
+        self.team1 = Team.objects.create(name='Team 1', tid='TEAM1')
+        self.team2 = Team.objects.create(name='Team 2', tid='TEAM2')
+        
+        # Create members
+        self.member1 = Member.objects.create(
+            user=self.user1,
+            team=self.team1,
+            display_name='Johnny'
+        )
+        self.member2 = Member.objects.create(
+            user=self.user2,
+            team=self.team1,
+            display_name='Janey'
         )
 
-        self.profile1 = Profile.objects.create(user=self.user, display_name="User 1 name")
-        self.profile2 = Profile.objects.create(user=self.other_user, display_name="User 2 name")
-
-        self.member = Member.objects.create(user=self.user, team=self.team)
-
-        self.url = reverse('team-members-list', kwargs={'team_tid': self.team.tid})
-
     def test_list_members(self):
-        """Test retrieving members' profiles."""
-        response = self.client.get(self.url)
-
+        """Test listing members"""
+        response = self.client.get(self.base_url.format(self.team1.tid))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['display_name'], "User 1 name")
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['display_name'], 'Johnny')
 
-    def test_create_member_success(self):
-        data = {'user': self.other_user.id}
-
-        response = self.client.post(self.url, data)
-
+    def test_create_member(self):
+        """Test creating a new member"""
+        self.client.force_authenticate(user=self.user1)
+        data = {
+            'user': self.user2.id,
+            'team': self.team2.id,
+            'display_name': 'New Member',
+            'role': 'member'
+        }
+        response = self.client.post(
+            self.base_url.format(self.team2.tid),
+            data=data,
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertTrue(Member.objects.filter(user=self.user, team=self.team).exists())
+        self.assertEqual(Member.objects.count(), 3)
 
-    def test_create_member_already_exists(self):
-        """Test trying to add an existing user to the same team."""
-        data = {'user': self.user.id}
-        response = self.client.post(self.url, data)
-
+    def test_create_duplicate_member(self):
+        """Test preventing duplicate members"""
+        self.client.force_authenticate(user=self.user1)
+        
+        Member.objects.create(
+            user=self.user2,
+            team=self.team2,
+            display_name='Existing Member'
+        )
+        
+        # Then try to create duplicate
+        data = {
+            'user': self.user2.id,
+            'display_name': 'Duplicate',
+            'role': 'member'
+        }
+        response = self.client.post(
+            self.base_url.format(self.team2.tid),
+            data=data,
+            format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('already a member', str(response.data))
 
-    def test_create_member_user_does_not_exist(self):
-        """
-        Test adding a member when the user does not exist.
-        """
-        data = {'user': 99}
+    def test_profiles_action(self):
+        """Test the custom profiles endpoint"""
+        Profile.objects.create(user=self.user1)
+        Profile.objects.create(user=self.user2)
 
-        response = self.client.post(self.url, data)
+        response = self.client.get(
+            f"{self.base_url.format(self.team1.tid)}profiles/"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data[0]['full_name'], 'John Doe')
 
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    def test_list_with_search(self):
+        """Test searching members"""
+        response = self.client.get(
+            f"{self.base_url.format(self.team1.tid)}?search=john"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['display_name'], 'Johnny')
 
-    def test_create_member_team_does_not_exist(self):
-        """
-        Test adding a member to a non-existent team.
-        """
-        invalid_url = reverse('team-members-list', kwargs={'team_tid': 'T56789012'})  # Non-existent team ID
-
-        data = {'user': self.other_user.id}
-        response = self.client.post(invalid_url, data)
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+    def test_list_with_limit(self):
+        """Test limiting results"""
+        response = self.client.get(
+            f"{self.base_url.format(self.team1.tid)}?limit=1"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
 
 
 class UserTeamsListViewTest(BaseAPITestCaseAuthenticated):

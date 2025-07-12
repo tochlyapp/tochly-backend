@@ -18,7 +18,7 @@ class TeamSerializer(serializers.ModelSerializer):
 
 class MemberSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
-    team = serializers.PrimaryKeyRelatedField(queryset=Team.objects.all(), required=False)
+    team = serializers.PrimaryKeyRelatedField(read_only=True)
     tid = serializers.SerializerMethodField(read_only=True)
     full_name = serializers.SerializerMethodField(read_only=True)
 

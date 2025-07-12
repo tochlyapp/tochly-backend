@@ -15,4 +15,4 @@ RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 USER celeryuser
 
-CMD ["celery", "-A", "celery", "worker", "--loglevel=info"]
+CMD ["celery", "-A", "tochly", "worker", "--loglevel=info"]

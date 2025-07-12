@@ -32,6 +32,7 @@ class TeamViewSet(viewsets.ModelViewSet):
         if name:
             queryset = queryset.filter(name__icontains=name)
 
+        queryset = queryset.order_by('-created')
         return queryset
 
 class MemberViewSet(viewsets.ModelViewSet):
@@ -115,4 +116,4 @@ class UserTeamsListView(generics.ListAPIView):
     serializer_class = TeamSerializer
 
     def get_queryset(self):
-        return Team.objects.filter(members__user=self.request.user).distinct()
+        return Team.objects.filter(members__user=self.request.user).distinct().order_by('-created')

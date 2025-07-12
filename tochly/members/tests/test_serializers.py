@@ -1,11 +1,8 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 
-from rest_framework import serializers
-
 from members.models import Team, Member
 from members.serializers import TeamSerializer, MemberSerializer
-from users.serializers import UserSerializer
 
 
 User = get_user_model()
@@ -59,58 +56,115 @@ class MemberSerializerTest(TestCase):
     def setUp(self):
         self.user = User.objects.create(
             email='test@example.com',
-            password='testPassword123',
             first_name='Ahmad',
             last_name='Ameen',
         )
-        self.team = Team.objects.create(name='Test Team', description='A test team')
+
+        self.team = Team.objects.create(name='Test Team', tid='TEAM1', description='A test team')
+        self.team2 = Team.objects.create(name='Test Team 2', tid='TEAM2')
+
         self.member_data = {
+            'user': self.user.pk,
+            'team': self.team.pk,
+            'display_name': 'Ahmad Ameen',
+            'role': 'member',
+            'status': 'remote'
+        }
+        self.member_data1 = {
             'user': self.user,
             'team': self.team,
+            'display_name': 'Ahmad Ameen',
             'role': 'member',
+            'status': 'remote'
         }
-        self.member = Member.objects.create(**self.member_data)
+        self.member = Member.objects.create(**self.member_data1)
 
-    def test_member_serializer_valid_data(self):
-        serializer = MemberSerializer(instance=self.member)
-        self.assertEqual(serializer.data['role'], self.member_data['role'])
-        self.assertEqual(serializer.data['user']['email'], self.user.email)
-        self.assertEqual(serializer.data['team'], self.team.id)
+    def test_serializer_fields(self):
+        """Test that serializer contains all model fields"""
+        serializer = MemberSerializer(self.member)
+        expected_fields = [
+            'id', 'user', 'team', 'role', 'display_name', 'title',
+            'phone_number', 'online', 'status', 'profile_picture_url',
+            'created', 'updated', 'tid', 'full_name'
+        ]
+        self.assertEqual(set(serializer.data.keys()), set(expected_fields))
 
-    def test_member_serializer_invalid_data(self):
-        invalid_data = {
-            'role': '',
-        }
-        serializer = MemberSerializer(data=invalid_data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('role', serializer.errors)
+    def test_get_full_name_method(self):
+        """Test the get_full_name method"""
+        serializer = MemberSerializer(self.member)
+        self.assertEqual(serializer.data['full_name'], 'Ahmad Ameen')
 
-    def test_member_serializer_to_representation(self):
-        serializer = MemberSerializer(instance=self.member)
-        representation = serializer.to_representation(self.member)
-        self.assertIn('user', representation)
-        self.assertIn('team', representation)
-        self.assertEqual(representation['user']['email'], self.user.email)
-        self.assertEqual(representation['team'], self.team.id)
+    def test_get_tid_method(self):
+        """Test the get_tid method"""
+        serializer = MemberSerializer(self.member)
+        self.assertEqual(serializer.data['tid'], 'TEAM1')
 
-    def test_member_serializer_create(self):
-        new_member_data = {
-            'user': self.user.id,
-            'team': self.team.id,
+    def test_to_representation(self):
+        """Test user serialization in representation"""
+        serializer = MemberSerializer(self.member)
+        self.assertIn('user', serializer.data)
+        self.assertEqual(serializer.data['user']['email'], 'test@example.com')
+        self.assertEqual(serializer.data['user']['first_name'], 'Ahmad')
+
+    def test_create_valid_member(self):
+        """Test creating a member with valid data"""
+        data = {
+            'user': self.user.pk,
+            'display_name': 'Ahmad Ameen',
             'role': 'member',
+            'status': 'remote'
         }
-        serializer = MemberSerializer(data=new_member_data)
+        serializer = MemberSerializer(data=data)
         self.assertTrue(serializer.is_valid())
-        member = serializer.save()
+        
+        member = serializer.save(team=self.team2)
         self.assertEqual(member.user, self.user)
-        self.assertEqual(member.team, self.team)
-        self.assertEqual(member.role, new_member_data['role'])
+        self.assertEqual(member.team, self.team2)
+        self.assertEqual(member.display_name, 'Ahmad Ameen')
 
-    def test_member_serializer_update(self):
+    def test_update_member(self):
+        """Test updating a member"""
         updated_data = {
-            'role': 'admin',
+            'display_name': 'Updated Name',
+            'status': 'meeting'
         }
         serializer = MemberSerializer(instance=self.member, data=updated_data, partial=True)
         self.assertTrue(serializer.is_valid())
         member = serializer.save()
-        self.assertEqual(member.role, updated_data['role'])
+        self.assertEqual(member.display_name, 'Updated Name')
+        self.assertEqual(member.status, 'meeting')
+
+    def test_validate_role_choices(self):
+        """Test role choice validation"""
+        invalid_data = self.member_data.copy()
+        invalid_data['role'] = 'invalid_role'
+        serializer = MemberSerializer(data=invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('role', serializer.errors)
+
+    def test_validate_status_choices(self):
+        """Test status choice validation"""
+        invalid_data = self.member_data.copy()
+        invalid_data['status'] = 'invalid_status'
+        serializer = MemberSerializer(data=invalid_data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('status', serializer.errors)
+
+    def test_phone_number_uniqueness(self):
+        """Test phone number uniqueness validation"""
+        self.user2 = User.objects.create_user(
+            email='user2@example.com',
+            first_name='Jane',
+            last_name='Smith'
+        )
+        self.team2 = Team.objects.create(name='Team 3', tid='TEAM3')
+        Member.objects.create(
+            user=self.user2,
+            team=self.team2,
+            phone_number='+1234567890'
+        )
+        data = self.member_data.copy()
+        data['phone_number'] = '+1234567890'
+        serializer = MemberSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('phone_number', serializer.errors)

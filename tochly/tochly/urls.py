@@ -6,4 +6,5 @@ urlpatterns = [
     path('api/auth/', include(('djoser.urls', 'djoser'), namespace='djoser')),
     path('api/', include('users.urls')),
     path('api/', include('members.urls')),
+    path('api/invitations/', include('invitations.urls')),
 ]

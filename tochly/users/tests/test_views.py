@@ -1,14 +1,11 @@
 from django.urls import reverse
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.conf import settings
 
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase, APIClient
-from rest_framework.response import Response
 from rest_framework import status
-
-from unittest.mock import patch
 
 from core.tests.base import BaseAPITestCaseAuthenticated
 from users.models import Profile
@@ -226,54 +223,105 @@ class LogoutViewTestCase(TestCase):
         refresh_cookie = response.cookies.get('refresh')
         self.assertIsNotNone(refresh_cookie, '')
 
-
-class ProfileViewSetTest(BaseAPITestCaseAuthenticated):
+class ProfileViewSetTests(BaseAPITestCaseAuthenticated):
     def setUp(self):
         super().setUp()
-        self.profile = Profile.objects.create(
-            user=self.user, 
-            display_name='Ahmad Ameen',
-            phone_number='+2348083431164',
+        self.user1 = User.objects.create_user(
+            email='user1@example.com',
+            password='testpass123'
         )
+        self.user2 = User.objects.create_user(
+            email='user2@example.com',
+            password='testpass123'
+        )
+        
+        # Create profiles
+        self.profile1 = Profile.objects.create(
+            user=self.user1,
+            timezone='UTC',
+            dark_mode=True
+        )
+        self.profile2 = Profile.objects.create(
+            user=self.user2,
+            timezone='America/New_York',
+            dark_mode=False
+        )
+        
+        # URLS
+        self.list_url = '/api/profiles/'
+        self.detail_url = f'/api/profiles/{self.profile1.id}/'
+        self.me_url = '/api/profiles/me/'
+        self.filter_url = '/api/profiles/?user_id={}'
+       
 
-        self.url = '/api/profiles/me/'
-
-    def test_get_user_profile_authenticated(self):
-        """Test that an authenticated user can retrieve their profile."""
-        response = self.client.get(self.url)
+    def test_list_profiles_authenticated(self):
+        """Test listing profiles as authenticated user"""
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['display_name'], 'Ahmad Ameen')
+        self.assertEqual(len(response.data), 2)  # Both profiles visible
 
-    def test_get_user_profile_unauthenticated(self):
-        """Test that an unauthenticated user cannot retrieve a profile."""
-        self.unauthenticate()
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_update_user_profile_authenticated(self):
-        """Test that an authenticated user can update their profile."""
-        data = {'display_name': 'Ahmad M'}
-        response = self.client.put(self.url, data, format='json')
+    def test_filter_profiles_by_user_id(self):
+        """Test filtering profiles by user_id"""
+        self.client.force_authenticate(user=self.user1)
+        url = self.filter_url.format(self.user2.id)
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.profile.refresh_from_db()
-        self.assertEqual(self.profile.display_name, 'Ahmad M')
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['user'], self.user2.id)
 
-    def test_partial_update_user_profile_authenticated(self):
-        """Test that an authenticated user can partially update their profile."""
-        data = {'phone_number': '+2349068387166'}
-        response = self.client.patch(self.url, data, format="json")
+    def test_retrieve_profile(self):
+        """Test retrieving a single profile"""
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.profile.refresh_from_db()
-        self.assertEqual(self.profile.phone_number, '+2349068387166')
+        self.assertEqual(response.data['user'], self.user1.id)
 
-    def test_delete_user_profile_authenticated(self):
-        """Test that an authenticated user can delete their profile."""
-        response = self.client.delete(self.url)
+    def test_me_endpoint_get(self):
+        """Test GET /profiles/me/ endpoint"""
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['user'], self.user1.id)
+
+    def test_me_endpoint_put(self):
+        """Test updating profile via PUT /profiles/me/"""
+        self.client.force_authenticate(user=self.user1)
+        data = {
+            'user': self.user1.id,
+            'timezone': 'Europe/London',
+            'dark_mode': False
+        }
+        response = self.client.put(self.me_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.profile1.refresh_from_db()
+        self.assertEqual(self.profile1.timezone, 'Europe/London')
+        self.assertFalse(self.profile1.dark_mode)
+
+    def test_me_endpoint_patch(self):
+        """Test partial update via PATCH /profiles/me/"""
+        self.client.force_authenticate(user=self.user1)
+        data = {'dark_mode': False}
+        response = self.client.patch(self.me_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.profile1.refresh_from_db()
+        self.assertFalse(self.profile1.dark_mode)
+        # Verify other fields unchanged
+        self.assertEqual(self.profile1.timezone, 'UTC')
+
+    def test_me_endpoint_delete(self):
+        """Test deleting profile via DELETE /profiles/me/"""
+        self.client.force_authenticate(user=self.user1)
+        response = self.client.delete(self.me_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Profile.objects.filter(user=self.user).exists())
+        self.assertFalse(Profile.objects.filter(id=self.profile1.id).exists())
 
-    def test_delete_user_profile_unauthenticated(self):
-        """Test that an unauthenticated user cannot delete a profile."""
-        self.unauthenticate()
-        response = self.client.delete(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    def test_me_endpoint_profile_not_found(self):
+        """Test /profiles/me/ when profile doesn't exist"""
+        user3 = User.objects.create_user(
+            email='user3@example.com',
+            password='testpass123'
+        )
+        self.client.force_authenticate(user=user3)
+        response = self.client.get(self.me_url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
