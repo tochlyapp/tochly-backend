@@ -19,7 +19,7 @@ from datetime import timedelta
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # load env config
-load_dotenv(dotenv_path=BASE_DIR / '../.env.dev')
+load_dotenv(dotenv_path=BASE_DIR / '../.env')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -28,6 +28,10 @@ load_dotenv(dotenv_path=BASE_DIR / '../.env.dev')
 SECRET_KEY = getenv("SECRET_KEY")
 
 SITE_ID = 1
+
+DEBUG = getenv('DEBUG', 'True') == 'True'
+
+ALLOWED_HOSTS = getenv('ALLOWED_HOSTS').split(',')
 
 # Application definition
 
@@ -155,6 +159,20 @@ REST_FRAMEWORK = {
     )
 }
 
+# Database
+# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': getenv('DB_NAME'),
+        'USER': getenv('DB_USER'),
+        'PASSWORD': getenv('DB_PASSWORD'),
+        'HOST': getenv('DB_HOST'),
+        'PORT': 5432,
+    }
+}
+
 # Djoser settings
 DJOSER = {
     'PASSWORD_RESET_CONFIRM_URL': 'auth/password-reset/{uid}/{token}',
@@ -171,6 +189,13 @@ SITE_NAME = 'Tochly'
 # cors settings
 CORS_ALLOWED_ORIGINS = getenv('CORS_ALLOWED_ORIGINS').split(',')
 CORS_ALLOW_CREDENTIALS = True
+
+# celery
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_EXPIRES = 3600
 
 # email settings
 EMAIL_BACKEND = 'django_ses.SESBackend'

@@ -93,7 +93,7 @@ class CustomTokenVerifyView(TokenVerifyView):
 class LogoutView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
-    def post(self):
+    def post(self, request):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie('access')
         response.delete_cookie('refresh')
