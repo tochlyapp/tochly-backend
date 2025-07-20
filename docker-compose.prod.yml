@@ -7,6 +7,8 @@ services:
     working_dir: /tochly
     volumes:
       - ./tochly:/tochly
+      - static_volume:/tochly/static
+      - media_volume:/tochly/media
     ports:
       - "8000:8000"
     depends_on:
@@ -39,3 +41,7 @@ services:
 
 volumes:
   pgdata:
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
