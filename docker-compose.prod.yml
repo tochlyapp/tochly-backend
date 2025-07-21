@@ -12,18 +12,24 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - default
+      - tochly_redis_net
 
   celery:
     build: .
     user: celeryuser
+    env_file:
+      - .env
     working_dir: /tochly
     volumes:
       - ./tochly:/tochly
-    env_file:
-      - .env
     depends_on:
       - db
       - redis
+    networks:
+      - default
+      - tochly_redis_net
 
   db:
     image: postgres:15-alpine
@@ -33,9 +39,18 @@ services:
       - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - default
 
   redis:
     image: redis:7-alpine
+    restart: always
+    networks:
+      - tochly_redis_net
 
 volumes:
   pgdata:
+
+networks:
+  tochly_redis_net:
+    external: true
