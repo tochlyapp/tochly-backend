@@ -181,6 +181,9 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': True,
     'TOKEN_MODEL': None,
     'SOCIAL_AUTH_ALLOWED_REDIRECT_URIS': getenv('ALLOWED_REDIRECT_URLS').split(','),
+    'SERIALIZERS': {
+        'user_create': 'users.serializers.CustomUserCreateSerializer',
+    },
 }
 # Djoser email context
 DOMAIN = getenv('WEB_HOST')

@@ -16,7 +16,6 @@ class ProfileModelTest(TestCase):
         )
         self.profile = Profile.objects.create(
             user=self.user,
-            timezone='America/New_York',
             dark_mode=True
         )
 
@@ -24,7 +23,6 @@ class ProfileModelTest(TestCase):
         """Test that a profile is properly created"""
         self.assertEqual(Profile.objects.count(), 1)
         self.assertEqual(self.profile.user, self.user)
-        self.assertEqual(self.profile.timezone, 'America/New_York')
         self.assertTrue(self.profile.dark_mode)
 
     def test_profile_str_representation(self):
@@ -63,8 +61,6 @@ class ProfileModelTest(TestCase):
             password='testpass123'
         )
         profile3 = Profile.objects.create(user=user3)
-        
-        self.assertIsNone(profile3.timezone)
         self.assertFalse(profile3.dark_mode)
 
     def test_profile_update(self):
@@ -74,5 +70,4 @@ class ProfileModelTest(TestCase):
         self.profile.save()
         
         updated_profile = Profile.objects.get(id=self.profile.id)
-        self.assertEqual(updated_profile.timezone, 'Europe/London')
         self.assertFalse(updated_profile.dark_mode)

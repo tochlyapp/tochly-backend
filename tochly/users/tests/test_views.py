@@ -238,12 +238,10 @@ class ProfileViewSetTests(BaseAPITestCaseAuthenticated):
         # Create profiles
         self.profile1 = Profile.objects.create(
             user=self.user1,
-            timezone='UTC',
             dark_mode=True
         )
         self.profile2 = Profile.objects.create(
             user=self.user2,
-            timezone='America/New_York',
             dark_mode=False
         )
         
@@ -289,13 +287,11 @@ class ProfileViewSetTests(BaseAPITestCaseAuthenticated):
         self.client.force_authenticate(user=self.user1)
         data = {
             'user': self.user1.id,
-            'timezone': 'Europe/London',
             'dark_mode': False
         }
         response = self.client.put(self.me_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.profile1.refresh_from_db()
-        self.assertEqual(self.profile1.timezone, 'Europe/London')
         self.assertFalse(self.profile1.dark_mode)
 
     def test_me_endpoint_patch(self):
@@ -306,8 +302,6 @@ class ProfileViewSetTests(BaseAPITestCaseAuthenticated):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.profile1.refresh_from_db()
         self.assertFalse(self.profile1.dark_mode)
-        # Verify other fields unchanged
-        self.assertEqual(self.profile1.timezone, 'UTC')
 
     def test_me_endpoint_delete(self):
         """Test deleting profile via DELETE /profiles/me/"""

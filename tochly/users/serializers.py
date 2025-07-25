@@ -1,11 +1,35 @@
+import pytz
 from rest_framework import serializers
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
+
 from users.models import User, Profile
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name')
+        fields = ('id', 'email', 'first_name', 'last_name', 'timezone')
         read_only_fields = ('id', 'email')
+
+class CustomUserCreateSerializer(BaseUserCreateSerializer):
+    timezone = serializers.ChoiceField(choices=[(tz, tz) for tz in pytz.all_timezones], required=False)
+    re_password = serializers.CharField(write_only=True)
+
+    class Meta(BaseUserCreateSerializer.Meta):
+        model = User
+        fields = (
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'password',
+            're_password',
+            'timezone',
+        )
+        extra_kwargs = {
+        'id': {'read_only': True},
+        'password': {'write_only': True},
+        're_password': {'write_only': True}
+    }
 
 class ProfileSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())

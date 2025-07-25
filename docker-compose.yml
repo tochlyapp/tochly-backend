@@ -36,6 +36,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
 
 volumes:
   pgdata:

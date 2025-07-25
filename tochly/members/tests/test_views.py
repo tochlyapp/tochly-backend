@@ -80,6 +80,9 @@ class MemberViewSetTest(BaseAPITestCaseAuthenticated):
             first_name='Jane',
             last_name='Smith'
         )
+
+        Profile.objects.create(user=self.user1)
+        Profile.objects.create(user=self.user2)
         
         self.team1 = Team.objects.create(name='Team 1', tid='TEAM1')
         self.team2 = Team.objects.create(name='Team 2', tid='TEAM2')
@@ -143,18 +146,6 @@ class MemberViewSetTest(BaseAPITestCaseAuthenticated):
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('already a member', str(response.data))
-
-    def test_profiles_action(self):
-        """Test the custom profiles endpoint"""
-        Profile.objects.create(user=self.user1)
-        Profile.objects.create(user=self.user2)
-
-        response = self.client.get(
-            f"{self.base_url.format(self.team1.tid)}profiles/"
-        )
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]['full_name'], 'John Doe')
 
     def test_list_with_search(self):
         """Test searching members"""

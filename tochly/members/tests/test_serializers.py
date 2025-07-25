@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth import get_user_model
 
 from members.models import Team, Member
+from users.models import Profile
 from members.serializers import TeamSerializer, MemberSerializer
 
 
@@ -63,6 +64,8 @@ class MemberSerializerTest(TestCase):
         self.team = Team.objects.create(name='Test Team', tid='TEAM1', description='A test team')
         self.team2 = Team.objects.create(name='Test Team 2', tid='TEAM2')
 
+        Profile.objects.create(user=self.user)
+
         self.member_data = {
             'user': self.user.pk,
             'team': self.team.pk,
@@ -83,7 +86,7 @@ class MemberSerializerTest(TestCase):
         """Test that serializer contains all model fields"""
         serializer = MemberSerializer(self.member)
         expected_fields = [
-            'id', 'user', 'team', 'role', 'display_name', 'title',
+            'id', 'user', 'profile', 'team', 'role', 'display_name', 'title',
             'phone_number', 'online', 'status', 'profile_picture_url',
             'created', 'updated', 'tid', 'full_name'
         ]
@@ -117,7 +120,7 @@ class MemberSerializerTest(TestCase):
         serializer = MemberSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         
-        member = serializer.save(team=self.team2)
+        member = serializer.save(user=self.user, team=self.team2)
         self.assertEqual(member.user, self.user)
         self.assertEqual(member.team, self.team2)
         self.assertEqual(member.display_name, 'Ahmad Ameen')

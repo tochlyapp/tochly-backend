@@ -8,7 +8,7 @@ from users.models import Profile
 class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        (('Personal info'), {'fields': ('first_name', 'last_name')}),
+        (('Personal info'), {'fields': ('first_name', 'last_name', 'timezone')}),
         (('Permissions'), {'fields': (
             'is_active', 
             'is_staff', 
@@ -37,6 +37,5 @@ class ProfileAdmin(admin.ModelAdmin):
     list_display = (
         'email', 
         'full_name', 
-        'timezone',
     )
     search_fields = ('full_name',)

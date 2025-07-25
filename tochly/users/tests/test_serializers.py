@@ -19,15 +19,14 @@ class ProfileSerializerTest(TestCase):
         )
         self.profile_data = {
             'user': self.user.id,
-            'timezone': 'America/New_York',
             'dark_mode': True
         }
 
     def test_serializer_fields(self):
         """Test that serializer contains all model fields"""
-        profile = Profile.objects.create(user=self.user, timezone='UTC')
+        profile = Profile.objects.create(user=self.user)
         serializer = ProfileSerializer(profile)
-        expected_fields = ['id', 'user', 'timezone', 'dark_mode', 'created', 'updated', 'email', 'full_name']
+        expected_fields = ['id', 'user', 'dark_mode', 'created', 'updated', 'email', 'full_name']
         self.assertEqual(set(serializer.data.keys()), set(expected_fields))
 
     def test_get_email_method(self):
@@ -51,7 +50,6 @@ class ProfileSerializerTest(TestCase):
         )
         profile_data = {
             'user': new_user.id,
-            'timezone': 'America/New_York',
             'dark_mode': True
         }
         
@@ -59,13 +57,11 @@ class ProfileSerializerTest(TestCase):
         self.assertTrue(serializer.is_valid())
         profile = serializer.save()
         self.assertEqual(profile.user, new_user)
-        self.assertEqual(profile.timezone, 'America/New_York')
         self.assertTrue(profile.dark_mode)
 
     def test_create_profile_missing_user(self):
         """Test creating a profile without a user"""
         invalid_data = {
-            'timezone': 'UTC',
             'dark_mode': False
         }
         serializer = ProfileSerializer(data=invalid_data)
@@ -80,14 +76,12 @@ class ProfileSerializerTest(TestCase):
         """Test the serializer output format"""
         profile = Profile.objects.create(
             user=self.user,
-            timezone='Europe/London',
             dark_mode=False
         )
         serializer = ProfileSerializer(profile)
         expected_data = {
             'id': profile.id,
             'user': self.user.id,
-            'timezone': 'Europe/London',
             'dark_mode': False,
             'created': profile.created.isoformat().replace('+00:00', 'Z'),
             'updated': profile.updated.isoformat().replace('+00:00', 'Z'),
@@ -100,17 +94,14 @@ class ProfileSerializerTest(TestCase):
         """Test updating a profile"""
         profile = Profile.objects.create(
             user=self.user,
-            timezone='UTC',
             dark_mode=True
         )
         update_data = {
-            'timezone': 'Asia/Tokyo',
             'dark_mode': False
         }
         serializer = ProfileSerializer(instance=profile, data=update_data, partial=True)
         self.assertTrue(serializer.is_valid())
         updated_profile = serializer.save()
-        self.assertEqual(updated_profile.timezone, 'Asia/Tokyo')
         self.assertFalse(updated_profile.dark_mode)
 
     def test_read_only_fields(self):

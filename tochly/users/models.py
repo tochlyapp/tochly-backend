@@ -40,6 +40,7 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
+    timezone = models.CharField(max_length=50, default='utc')
 
     USERNAME_FIELD = 'email'
 
@@ -50,7 +51,6 @@ class User(AbstractUser):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    timezone = models.CharField(max_length=50, blank=True, null=True)
     dark_mode = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

@@ -45,6 +45,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
     networks:
       - tochly_redis_net
 
