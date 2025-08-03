@@ -13,7 +13,7 @@ from rest_framework import viewsets, generics, status
 from rest_framework.views import APIView
 from rest_framework.serializers import ValidationError
 
-from common.utils import CacheRateLimiter
+from common.utils.ratelimiter import CacheRateLimiter
 from members.utils.s3 import (
     generate_presigned_url, 
     delete_old_profile_picture,
