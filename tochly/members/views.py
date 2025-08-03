@@ -113,7 +113,7 @@ class PresignedProfileUploadView(APIView):
         key = f'profile_pictures/{unique_id}.{extension}'
 
         presigned_url = generate_presigned_url(key, content_type=content_type)
-        file_url = f'https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{key}'
+        file_url = f'https://{settings.AWS_S3_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{key}'
         upload_token = str(uuid.uuid4())
 
         cache.set(
@@ -148,7 +148,7 @@ class CompleteProfileUploadView(APIView):
         if data['user_id'] != request.user.id:
             return Response({'error': 'Token does not belong to you.'}, status=403)
         
-        file_url = f"https://{settings.AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{data['key']}"
+        file_url = f"https://{settings.AWS_S3_STORAGE_BUCKET_NAME}.s3.amazonaws.com/{data['key']}"
 
         try:
             member = Member.objects.get(user=request.user, team__tid=team_tid)
