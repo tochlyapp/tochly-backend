@@ -1,8 +1,13 @@
 from django.urls import path, include
 from rest_framework_nested import routers
 
-from members.views import TeamViewSet, MemberViewSet, UserTeamsListView
-
+from members.views import (
+    TeamViewSet, 
+    MemberViewSet, 
+    UserTeamsListView,
+    PresignedProfileUploadView,
+    CompleteProfileUploadView,
+)
 
 router = routers.SimpleRouter()
 router.register(r'teams', viewset=TeamViewSet, basename='teams')
@@ -14,4 +19,6 @@ urlpatterns = [
     path('users/teams/', UserTeamsListView.as_view(), name='user-teams'),
     path(r'', include(router.urls)),
     path(r'', include(teams_router.urls)),
+    path('upload/profile/presign/', PresignedProfileUploadView.as_view(), name='presigned_profile_upload'),
+    path('upload/profile/complete/', CompleteProfileUploadView.as_view(), name='complete_profile_upload'),
 ]

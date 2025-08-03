@@ -212,6 +212,23 @@ AWS_SES_REGION_ENDPOINT = f'email.{AWS_SES_REGION_NAME}.amazonaws.com'
 AWS_SES_AUTO_THROTTLE = 0.5  # seconds
 USE_SES_V2 = True
 
+# AWS S3 Config
+AWS_ACCESS_KEY_ID = getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = getenv('AWS_S3_REGION_NAME')
+
+# Redis via django-redis
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': getenv('DJANGO_CACHE_LOCATION'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
 # google social auth settings
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = getenv('GOOGLE_AUTH_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = getenv('GOOGLE_AUTH_SECRET_KEY')
