@@ -11,6 +11,7 @@ social-auth-app-django==5.4.0
 drf-nested-routers==0.94.1
 celery>=5.2,<6.0
 redis>=4.3,<5.0
+django-redis==6.0.0
 pydantic==2.11.5
 email-validator==2.2.0
 gunicorn
