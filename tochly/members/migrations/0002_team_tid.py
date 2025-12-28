@@ -16,3 +16,5 @@ class Migration(migrations.Migration):
             field=models.CharField(db_index=True, default='T92709JGP', max_length=10, unique=True),
         ),
     ]
+
+

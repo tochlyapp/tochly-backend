@@ -51,7 +51,7 @@ class MemberViewSet(viewsets.ModelViewSet):
         tid = self.kwargs['team_tid']
         team = get_object_or_404(Team, tid=tid)
         user_id = self.request.query_params.get('user_id')
-        queryset = Member.objects.filter(team=team).select_related('user__profile')
+        queryset = Member.objects.filter(team=team)
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         

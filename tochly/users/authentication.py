@@ -1,6 +1,11 @@
 from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from rest_framework.permissions import BasePermission
+
+class CustomPermission(BasePermission):
+    def has_permission(self, request):
+        return isinstance(request.user, )
 
 class CustomJWTAuthentication(JWTAuthentication):
     def authenticate(self, request):

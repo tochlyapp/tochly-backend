@@ -15,3 +15,4 @@ django-redis==6.0.0
 pydantic==2.11.5
 email-validator==2.2.0
 gunicorn
+whitenoise
